@@ -59,9 +59,18 @@
         font-weight: 700;
       }
 
-      #show-log-btn {
+      .btn {
+        display: flex;
+        justify-content: center;
+        align-items: center;  
+        gap: 1rem;
+      }
+
+      #show-log-btn,
+      #show-salary-btn {
         margin-top: 1.5rem;
-        background-color: #f59e0b; /* برتقالي */
+        background-color: #f59e0b;
+        /* برتقالي */
         color: black;
         font-weight: bold;
         padding: 0.5rem 1rem;
@@ -69,7 +78,8 @@
         transition: background-color 0.3s;
       }
 
-      #show-log-btn:hover {
+      #show-log-btn:hover,
+      #show-salary-btn:hover {
         background-color: #d97706;
         cursor: pointer;
       }
