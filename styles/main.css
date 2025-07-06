@@ -1,85 +1,168 @@
-      body {
-        font-family: 'Cairo', sans-serif;
-        background: #121212;
-      }
+:root {
+  --color-bg: #121212;
+  --color-glass: rgba(255, 255, 255, 0.1);
+  --color-text: #ffffff;
+  --color-primary: #f59e0b;
+  --color-primary-hover: #d97706;
+  --color-success: #10b981;
+  --color-success-dark: #059669;
+  --color-error: #ef4444;
+  --color-warning: #fbbf24;
+  --font-base: 'Cairo', sans-serif;
+  --blur-strong: 15px;
+}
 
-      .glass {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border-radius: 1rem;
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-      }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-      /* المودال */
-      .modal {
-        position: fixed;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        background: rgba(0, 0, 0, 0.7);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-      }
+html, body {
+  width: 100%;
+  height: 100%;
+}
 
-      .modal.hidden {
-        display: none;
-      }
+body {
+  font-family: var(--font-base);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  line-height: 1.5;
+}
 
-      .modal-content {
-        background: rgba(255, 255, 255, 0.12);
-        backdrop-filter: blur(15px);
-        padding: 2rem;
-        border-radius: 1rem;
-        max-width: 90%;
-        text-align: center;
-        color: white;
-      }
+.glass {
+  background: var(--color-glass);
+  backdrop-filter: blur(var(--blur-strong));
+  border-radius: 1rem;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  width: 100%;
+  max-width: 420px;
+  padding: 2rem;
+}
 
-      #attendance-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 1rem;
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 0.5rem;
-        overflow: hidden;
-      }
+button {
+  appearance: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  font-family: var(--font-base);
+  transition: background-color 0.3s, transform 0.2s;
+}
 
-      #attendance-table th,
-      #attendance-table td {
-        padding: 0.75rem 1rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      }
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
-      #attendance-table th {
-        background: rgba(255, 255, 255, 0.15);
-        font-weight: 700;
-      }
+/* أزرار أساسية */
+#check-in-btn {
+  background-color: var(--color-success);
+  color: #fff;
+}
+#check-in-btn:hover:not(:disabled) {
+  background-color: var(--color-success-dark);
+}
 
-      .btn {
-        display: flex;
-        justify-content: center;
-        align-items: center;  
-        gap: 1rem;
-      }
+#check-out-btn {
+  background-color: var(--color-primary);
+  color: #000;
+}
+#check-out-btn:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+}
 
-      #show-log-btn,
-      #show-salary-btn {
-        margin-top: 1.5rem;
-        background-color: #f59e0b;
-        /* برتقالي */
-        color: black;
-        font-weight: bold;
-        padding: 0.5rem 1rem;
-        border-radius: 0.75rem;
-        transition: background-color 0.3s;
-      }
+#show-log-btn,
+#show-salary-btn {
+  background-color: var(--color-primary);
+  color: #000;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  width: 100%;
+  margin-top: 1rem;
+}
+#show-log-btn:hover,
+#show-salary-btn:hover {
+  background-color: var(--color-primary-hover);
+}
 
-      #show-log-btn:hover,
-      #show-salary-btn:hover {
-        background-color: #d97706;
-        cursor: pointer;
-      }
+/* خريطة Leaflet */
+#map {
+  width: 100%;
+  max-width: 420px;
+  height: 300px;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  margin-top: 1.5rem;
+}
+
+/* جدول الحضور */
+#attendance-table {
+  width: 100%;
+  margin-top: 1rem;
+  border-collapse: collapse;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+#attendance-table th,
+#attendance-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#attendance-table th {
+  background: rgba(255, 255, 255, 0.15);
+  font-weight: 700;
+}
+
+/* المودال */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background: var(--color-glass);
+  backdrop-filter: blur(var(--blur-strong));
+  border-radius: 1rem;
+  padding: 2rem;
+  max-width: 90%;
+  text-align: center;
+  color: var(--color-text);
+}
+
+/* أزرار داخل المودال */
+.modal-content button {
+  background-color: var(--color-warning);
+  color: #000;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  margin-top: 1rem;
+}
+.modal-content button:hover {
+  background-color: #d97706;
+}
+
+/* استجابة للشاشات الأكبر */
+@media (min-width: 768px) {
+  .glass {
+    max-width: 500px;
+  }
+  #map {
+    height: 400px;
+  }
+}

@@ -1,99 +1,78 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>نظام الحضور</title>
 
-    <!-- Tailwind CSS via CDN -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
-      rel="stylesheet"
-    />
-    <!-- Leaflet CSS -->
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    />
-    <!-- خطوط Google اختيارية -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="./styles/main.css" />
-  </head>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>نظام الحضور</title>
 
-  <body
-    class="min-h-screen flex flex-col items-center justify-center px-4 py-10 text-white"
-  >
-    <div class="glass p-6 w-full max-w-md text-center space-y-6">
-      <h1 class="text-2xl font-bold">نظام الحضور الشخصي</h1>
+  <!-- Tailwind CSS via CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- خطوط Google اختيارية -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles/main.css" />
+</head>
 
-      <div id="datetime" class="text-lg"></div>
+<body class="min-h-screen flex flex-col items-center justify-center px-4 py-10 text-white">
+  <div class="glass p-6 w-full max-w-md text-center space-y-6">
+    <h1 class="text-2xl font-bold">نظام الحضور الشخصي</h1>
 
-      <div id="location-status" class="text-sm text-green-300">
-        جاري تحديد الموقع...
-      </div>
-
-      <div class="space-y-4 mt-6">
-        <button
-          id="check-in-btn"
-          class="w-full py-2 rounded-xl bg-green-500 hover:bg-green-600 transition"
-        >
-          تسجيل دخول
-        </button>
-        <button
-          id="check-out-btn"
-          class="w-full py-2 rounded-xl bg-blue-500 hover:bg-blue-600 transition"
-        >
-          تسجيل خروج
-        </button>
-      </div>
-      <div class="btn">
-        <button id="show-log-btn" class="mt-6 w-full">📋 عرض السجل</button>
-        <button id="show-salary-btn" class="mt-6 w-full">
-          عرض الراتب الشهري
-        </button>
-      </div>
-
-      <table
-        id="attendance-table"
-        class="mt-4 text-black"
-        style="display: none"
-      >
-        <thead>
-          <tr>
-            <th>النوع</th>
-            <th>الوقت</th>
-            <th>الأجر</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+    <div id="datetime" class="text-lg"></div>
+    <div id="countdown" class="text-sm text-yellow-300 mt-2"></div>
+    <div id="location-status" class="text-sm text-green-300">
+      جاري تحديد الموقع...
     </div>
 
-    <!-- عنصر الخريطة -->
-    <div
-      id="map"
-      class="w-full max-w-md mt-6 rounded-lg overflow-hidden"
-      style="height: 300px"
-    ></div>
-
-    <!-- مودال الرسالة -->
-    <div id="modal" class="modal hidden">
-      <div class="modal-content">
-        <p id="modal-message"></p>
-        <button
-          onclick="closeModal()"
-          class="mt-4 px-4 py-2 rounded-lg bg-yellow-400 text-black font-semibold hover:bg-yellow-500 transition"
-        >
-          إغلاق
-        </button>
-      </div>
+    <div class="space-y-4 mt-6">
+      <button id="check-in-btn" class="w-full py-2 rounded-xl bg-green-500 hover:bg-green-600 transition">
+        تسجيل دخول
+      </button>
+      <button id="check-out-btn" class="w-full py-2 rounded-xl bg-blue-500 hover:bg-blue-600 transition">
+        تسجيل خروج
+      </button>
     </div>
+    <div class="btn">
+      <button id="show-log-btn" class="mt-6 w-full">📋 عرض السجل</button>
+      <button id="show-salary-btn" class="mt-6 w-full">
+        عرض الراتب الشهري
+      </button>
+    </div>
+<button id="toggle-test-mode" class="mt-4 bg-gray-600 px-4 py-2 rounded-lg">
+  🧪 تفعيل وضع التجربة
+</button>
+    <table id="attendance-table" class="mt-4 text-black" style="display: none">
+      <thead>
+        <tr>
+          <th>التاريخ</th>
+          <th>الدخول</th>
+          <th>الخروج</th>
+          <th>الأجر</th>
+        </tr>
+      </thead>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="scripts/app.js"></script>
-  </body>
+  <!-- عنصر الخريطة -->
+  <div id="map" class="w-full max-w-md mt-6 rounded-lg overflow-hidden" style="height: 300px"></div>
+
+  <!-- مودال الرسالة -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <p id="modal-message"></p>
+      <button onclick="closeModal()"
+        class="mt-4 px-4 py-2 rounded-lg bg-yellow-400 text-black font-semibold hover:bg-yellow-500 transition">
+        إغلاق
+      </button>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="scripts/app.js"></script>
+</body>
+
 </html>
