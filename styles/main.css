@@ -74,12 +74,17 @@ button:disabled {
 #check-out-btn:hover:not(:disabled) {
   background-color: var(--color-primary-hover);
 }
-
+.btn{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+}
 #show-log-btn,
 #show-salary-btn {
   background-color: var(--color-primary);
   color: #000;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0.5rem ;
   border-radius: 0.75rem;
   width: 100%;
   margin-top: 1rem;
