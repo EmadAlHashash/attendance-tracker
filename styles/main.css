@@ -12,15 +12,19 @@
   --blur-strong: 15px;
 }
 
+/* تعيين قاعدة box-sizing للجميع */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
+/* html و body بنسبة 100% ويحتوي على تمكين التمرير */
 html, body {
   width: 100%;
   height: 100%;
+  overflow-x: hidden;
+  font-size: 16px; /* حجم الخط الأساسي */
 }
 
 body {
@@ -32,18 +36,26 @@ body {
   align-items: center;
   padding: 1rem;
   line-height: 1.5;
+  min-height: 100vh;
 }
 
+/* العنصر الزجاجي */
 .glass {
   background: var(--color-glass);
   backdrop-filter: blur(var(--blur-strong));
   border-radius: 1rem;
   box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
   width: 100%;
-  max-width: 420px;
-  padding: 2rem;
+  max-width: 100%; /* ليملأ العرض بالكامل */
+  padding: 1.5rem;
+  margin: 0 auto;
+  /* السماح بالتمدد لأصغر الشاشات */
+  min-width: 280px; 
+  /* بديل للـ backdrop-filter للأجهزة القديمة */
+  /* يمكن إضافة فلتر بديل هنا أو إزالته حسب دعم الجهاز */
 }
 
+/* الأزرار */
 button {
   appearance: none;
   border: none;
@@ -51,6 +63,12 @@ button {
   cursor: pointer;
   font-family: var(--font-base);
   transition: background-color 0.3s, transform 0.2s;
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  user-select: none;
+  width: 100%;
+  max-width: 100%;
 }
 
 button:disabled {
@@ -58,11 +76,11 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* أزرار أساسية */
 #check-in-btn {
   background-color: var(--color-success);
   color: #fff;
 }
+
 #check-in-btn:hover:not(:disabled) {
   background-color: var(--color-success-dark);
 }
@@ -71,24 +89,30 @@ button:disabled {
   background-color: var(--color-primary);
   color: #000;
 }
+
 #check-out-btn:hover:not(:disabled) {
   background-color: var(--color-primary-hover);
 }
-.btn{
+
+.btn {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 15px;
+  gap: 0.75rem;
+  flex-wrap: wrap; /* للسماح بالانتقال للسطر الجديد في الهواتف الصغيرة */
 }
+
 #show-log-btn,
 #show-salary-btn {
   background-color: var(--color-primary);
   color: #000;
-  padding: 0.5rem 0.5rem ;
+  padding: 0.5rem 1rem;
   border-radius: 0.75rem;
   width: 100%;
   margin-top: 1rem;
+  font-size: 1rem;
 }
+
 #show-log-btn:hover,
 #show-salary-btn:hover {
   background-color: var(--color-primary-hover);
@@ -97,11 +121,11 @@ button:disabled {
 /* خريطة Leaflet */
 #map {
   width: 100%;
-  max-width: 420px;
-  height: 300px;
+  max-width: 100%;
+  height: 250px; /* خفض الارتفاع قليلاً للهواتف الصغيرة */
   border-radius: 0.75rem;
   overflow: hidden;
-  margin-top: 1.5rem;
+  margin-top: 1rem;
 }
 
 /* جدول الحضور */
@@ -111,13 +135,15 @@ button:disabled {
   border-collapse: collapse;
   background: rgba(255, 255, 255, 0.05);
   border-radius: 0.5rem;
-  overflow: hidden;
+  overflow-x: auto; /* السماح بالتمرير أفقيًا على الجداول العريضة */
+  display: block;
 }
 
 #attendance-table th,
 #attendance-table td {
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 0.75rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap; /* منع التفاف النص داخل الخلايا */
 }
 
 #attendance-table th {
@@ -134,6 +160,8 @@ button:disabled {
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  padding: 1rem; /* لتجنب القص على الشاشات الصغيرة */
+  overflow-y: auto; /* السماح بالتمرير العمودي داخل المودال */
 }
 
 .modal.hidden {
@@ -144,8 +172,11 @@ button:disabled {
   background: var(--color-glass);
   backdrop-filter: blur(var(--blur-strong));
   border-radius: 1rem;
-  padding: 2rem;
-  max-width: 90%;
+  padding: 1.5rem;
+  max-width: 100%;
+  width: 400px; /* عرض ثابت للسطح الكبير */
+  max-height: 90vh;
+  overflow-y: auto;
   text-align: center;
   color: var(--color-text);
 }
@@ -157,12 +188,35 @@ button:disabled {
   padding: 0.5rem 1rem;
   border-radius: 0.75rem;
   margin-top: 1rem;
+  width: 100%;
+  max-width: 200px;
+  font-size: 1rem;
 }
+
 .modal-content button:hover {
   background-color: #d97706;
 }
 
 /* استجابة للشاشات الأكبر */
+@media (min-width: 480px) {
+  body {
+    font-size: 1rem;
+  }
+  
+  .glass {
+    max-width: 420px;
+    padding: 2rem;
+  }
+  
+  #map {
+    height: 300px;
+  }
+  
+  .modal-content {
+    width: 400px;
+  }
+}
+
 @media (min-width: 768px) {
   .glass {
     max-width: 500px;
