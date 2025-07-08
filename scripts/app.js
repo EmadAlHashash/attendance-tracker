@@ -1,7 +1,7 @@
-
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("service-worker.js")
+    navigator.serviceWorker
+      .register("service-worker.js")
       .then((reg) => console.log("✅ تم تسجيل Service Worker", reg))
       .catch((err) => console.error("❌ فشل في التسجيل", err));
   });
@@ -16,7 +16,10 @@ function initDB() {
   request.onsuccess = (event) => (db = event.target.result);
   request.onupgradeneeded = (event) => {
     db = event.target.result;
-    const store = db.createObjectStore("entries", { keyPath: "id", autoIncrement: true });
+    const store = db.createObjectStore("entries", {
+      keyPath: "id",
+      autoIncrement: true,
+    });
     store.createIndex("date", "date");
     store.createIndex("type", "type");
     store.createIndex("datetime", "datetime");
@@ -55,11 +58,17 @@ const dailyWage = 10;
 function updateDateTime() {
   const now = new Date();
   datetimeElement.textContent = now.toLocaleDateString("ar-EG", {
-    weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit"
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 
-  const h = now.getHours(), m = now.getMinutes();
-  checkInBtn.style.display = (h === 6 || (h === 7 && m === 0)) ? "block" : "none";
+  const h = now.getHours(),
+    m = now.getMinutes();
+  checkInBtn.style.display = h === 6 || (h === 7 && m === 0) ? "block" : "none";
 
   if (h === 15 && m >= 30) {
     checkOutBtn.textContent = "تسجيل خروج (عادي)";
@@ -87,19 +96,22 @@ function getNextActionTime() {
   }
   return null;
 }
-
 function updateCountdown() {
   const countdownEl = document.getElementById("countdown");
   const next = getNextActionTime();
-  if (!next) return countdownEl.textContent = "✅ لا توجد عمليات متاحة حالياً.";
+  if (!next)
+    return (countdownEl.textContent = "✅ لا توجد عمليات متاحة حالياً.");
 
   const diff = next.time - new Date();
-  if (diff <= 0) return countdownEl.textContent = `✅ حان وقت ${next.label}`;
+  if (diff <= 0) return (countdownEl.textContent = `✅ حان وقت ${next.label}`);
 
-  const mins = Math.floor(diff / 60000);
+  const totalMins = Math.floor(diff / 60000);
+  const hours = Math.floor(totalMins / 60);
+  const mins = totalMins % 60;
   const secs = Math.floor((diff % 60000) / 1000);
-  countdownEl.textContent = `⏳ الوقت المتبقي حتى ${next.label}: ${mins} دقيقة و ${secs} ثانية`;
+  countdownEl.textContent = `⏳ الوقت المتبقي حتى ${next.label}: ${hours} ساعة و ${mins} دقيقة و ${secs} ثانية`;
 }
+
 
 setInterval(updateCountdown, 1000);
 updateCountdown();
@@ -111,16 +123,23 @@ navigator.geolocation.getCurrentPosition(
   (position) => {
     const lat = position.coords.latitude.toFixed(6);
     const lng = position.coords.longitude.toFixed(6);
-    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=ar`)
-      .then(res => res.json())
-      .then(data => {
-        const name = data.address.city || data.address.town || data.address.village || data.address.suburb || "موقع غير معروف";
+    fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=ar`
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        const name =
+          data.address.city ||
+          data.address.town ||
+          data.address.village ||
+          data.address.suburb ||
+          "موقع غير معروف";
         locationStatus.textContent = `📍 الموقع الحالي: ${name}`;
         L.marker([lat, lng]).addTo(map).bindPopup(`📍 ${name}`).openPopup();
       })
-      .catch(() => locationStatus.textContent = "📍 تعذر تحديد اسم الموقع");
+      .catch(() => (locationStatus.textContent = "📍 تعذر تحديد اسم الموقع"));
   },
-  () => locationStatus.textContent = "❌ فشل في تحديد الموقع",
+  () => (locationStatus.textContent = "❌ فشل في تحديد الموقع"),
   { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
 );
 
@@ -133,7 +152,9 @@ async function hasCheckedToday(type) {
     request.onsuccess = () => {
       const today = new Date().toDateString();
       const found = request.result.some(
-        (entry) => entry.type === type && new Date(entry.datetime).toDateString() === today
+        (entry) =>
+          entry.type === type &&
+          new Date(entry.datetime).toDateString() === today
       );
       resolve(found);
     };
@@ -144,9 +165,12 @@ async function hasCheckedToday(type) {
 // ==================== 6. تسجيل الدخول والخروج ====================
 function calculateDistance(lat1, lon1, lat2, lon2) {
   const R = 6371e3;
-  const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180;
-  const Δφ = (lat2 - lat1) * Math.PI / 180, Δλ = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+  const φ1 = (lat1 * Math.PI) / 180,
+    φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180,
+    Δλ = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
@@ -166,15 +190,24 @@ async function checkLocationAndProceed(type) {
 
   navigator.geolocation.getCurrentPosition(
     (position) => {
-      const distance = calculateDistance(position.coords.latitude, position.coords.longitude, 31.992754, 36.008455);
+      const distance = calculateDistance(
+        position.coords.latitude,
+        position.coords.longitude,
+        31.992754,
+        36.008455
+      );
       if (distance <= 100) {
-        const wage = type.includes("إضافي") ? 15 : type.includes("عادي") ? 10 : null;
+        const wage = type.includes("إضافي")
+          ? 13.44
+          : type.includes("عادي")
+          ? 9.16
+          : null;
         const now = new Date();
         const entry = {
           type,
           datetime: now.toISOString(),
           date: now.toDateString(),
-          wage
+          wage,
         };
         saveAttendanceToDB(entry);
         showModal(`✅ تم ${type} بنجاح`);
@@ -187,7 +220,9 @@ async function checkLocationAndProceed(type) {
   );
 }
 
-checkInBtn.addEventListener("click", () => checkLocationAndProceed("تسجيل دخول"));
+checkInBtn.addEventListener("click", () =>
+  checkLocationAndProceed("تسجيل دخول")
+);
 checkOutBtn.addEventListener("click", () => {
   const type = getCheckoutType();
   if (!type) return showModal("❌ لا يمكنك تسجيل الخروج الآن.");
@@ -203,7 +238,7 @@ function loadAttendanceLog() {
   request.onsuccess = () => {
     const data = request.result;
     attendanceBody.innerHTML = "";
-       if (data.length === 0) {
+    if (data.length === 0) {
       showModal("لا يوجد سجلات حالياً.");
       return;
     }
@@ -214,7 +249,7 @@ function loadAttendanceLog() {
       const dateKey = new Date(entry.datetime).toLocaleDateString("ar-EG");
       const time = new Date(entry.datetime).toLocaleTimeString("ar-EG", {
         hour: "2-digit",
-        minute: "2-digit"
+        minute: "2-digit",
       });
 
       if (!grouped[dateKey]) grouped[dateKey] = { in: "-", out: "-", wage: 0 };
@@ -222,7 +257,9 @@ function loadAttendanceLog() {
       if (entry.type === "تسجيل دخول") {
         grouped[dateKey].in = time;
       } else if (entry.type.includes("خروج")) {
-        grouped[dateKey].out = `${time} (${entry.type.includes("إضافي") ? "إضافي" : "عادي"})`;
+        grouped[dateKey].out = `${time} (${
+          entry.type.includes("إضافي") ? "إضافي" : "عادي"
+        })`;
         grouped[dateKey].wage += entry.wage || 0;
       }
     });
@@ -273,7 +310,10 @@ function calculateMonthlySalary(callback) {
 
     data.forEach((entry) => {
       const entryDate = new Date(entry.datetime);
-      if (entry.type === "تسجيل دخول" && entryDate.getMonth() === currentMonth) {
+      if (
+        entry.type === "تسجيل دخول" &&
+        entryDate.getMonth() === currentMonth
+      ) {
         workingDays++;
       }
     });
@@ -285,12 +325,27 @@ function calculateMonthlySalary(callback) {
 
 showSalaryBtn.addEventListener("click", () => {
   calculateMonthlySalary((result) => {
-    const currentMonth = new Date().toLocaleString("ar-EG", { month: "long" });
-    showModal(
-      `📊 شهر ${currentMonth}:\n` +
-      `أيام العمل: ${result.workingDays}\n` +
-      `الراتب الإجمالي: ${result.totalSalary} د.أ`
-    );
+    const today = new Date();
+    const monthName = today.toLocaleString("ar-EG", { month: "long" });
+    const year = today.getFullYear();
+
+    const lastDay = new Date(
+      today.getFullYear(),
+      today.getMonth() + 1,
+      0
+    ).getDate();
+
+    let message =
+      `📊 راتب شهر ${monthName} ${year}:\n` +
+      `📅 أيام العمل: ${result.workingDays}`;
+
+    if (today.getDate() === lastDay) {
+      message += `\n💰 الراتب الإجمالي: ${result.totalSalary} د.أ`;
+    } else {
+      message += `\n💡 سيتم عرض الراتب الكامل في نهاية الشهر.`;
+    }
+
+    showModal(message);
   });
 });
 
@@ -300,15 +355,26 @@ window.addEventListener("load", async () => {
   const h = now.getHours();
   const m = now.getMinutes();
 
-  if ((h === 6 || (h === 7 && m === 0)) && !(await hasCheckedToday("تسجيل دخول"))) {
+  if (
+    (h === 6 || (h === 7 && m === 0)) &&
+    !(await hasCheckedToday("تسجيل دخول"))
+  ) {
     checkLocationAndProceed("تسجيل دخول");
   }
 
-  if (h === 15 && m >= 25 && m <= 40 && !(await hasCheckedToday("تسجيل خروج (عادي)"))) {
+  if (
+    h === 15 &&
+    m >= 25 &&
+    m <= 40 &&
+    !(await hasCheckedToday("تسجيل خروج (عادي)"))
+  ) {
     checkLocationAndProceed("تسجيل خروج (عادي)");
   }
 
-  if (((h === 17 && m >= 50) || (h === 18 && m <= 10)) && !(await hasCheckedToday("تسجيل خروج (إضافي)"))) {
+  if (
+    ((h === 17 && m >= 50) || (h === 18 && m <= 10)) &&
+    !(await hasCheckedToday("تسجيل خروج (إضافي)"))
+  ) {
     checkLocationAndProceed("تسجيل خروج (إضافي)");
   }
 });
@@ -316,6 +382,9 @@ window.addEventListener("load", async () => {
 // ==================== إعداد الخريطة ====================
 const map = L.map("map").setView([31.992754, 36.008455], 16);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  attribution: "&copy; OpenStreetMap contributors"
+  attribution: "&copy; OpenStreetMap contributors",
 }).addTo(map);
-L.marker([31.992754, 36.008455]).addTo(map).bindPopup("📍 موقع الشركة").openPopup();
+L.marker([31.992754, 36.008455])
+  .addTo(map)
+  .bindPopup("📍 موقع الشركة")
+  .openPopup();
