@@ -7,7 +7,7 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-// ========== 1. قاعدة البيانات والمودال ==========
+// ========== قاعدة البيانات والمودال ==========
 let db;
 
 function initDB() {
@@ -28,9 +28,8 @@ function initDB() {
 }
 
 function showModal(message) {
-  const modal = document.getElementById("modal");
   document.getElementById("modal-message").innerText = message;
-  modal.classList.remove("hidden");
+  document.getElementById("modal").classList.remove("hidden");
 }
 
 function closeModal() {
@@ -44,7 +43,7 @@ function saveAttendanceToDB(entry) {
 
 initDB();
 
-// ========== 2. عناصر الصفحة ==========
+// ========== عناصر الصفحة ==========
 const datetimeElement = document.getElementById("datetime");
 const locationStatus = document.getElementById("location-status");
 const checkInBtn = document.getElementById("check-in-btn");
@@ -55,7 +54,7 @@ const attendanceTable = document.getElementById("attendance-table");
 const attendanceBody = attendanceTable.querySelector("tbody");
 const dailyWage = 10;
 
-// ========== 3. الوقت والعد التنازلي ==========
+// ========== الوقت والعد التنازلي ==========
 function updateDateTime() {
   const now = new Date();
   datetimeElement.textContent = now.toLocaleDateString("ar-EG", {
@@ -117,32 +116,13 @@ setInterval(updateCountdown, 1000);
 updateCountdown();
 updateDateTime();
 setInterval(updateDateTime, 60000);
-// ========== 4. الموقع الجغرافي ==========
-navigator.geolocation.getCurrentPosition(
-  (position) => {
-    const lat = position.coords.latitude.toFixed(6);
-    const lng = position.coords.longitude.toFixed(6);
-    fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=ar`
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        const name =
-          data.address.city ||
-          data.address.town ||
-          data.address.village ||
-          data.address.suburb ||
-          "موقع غير معروف";
-        locationStatus.textContent = `📍 الموقع الحالي: ${name}`;
-        L.marker([lat, lng]).addTo(map).bindPopup(`📍 ${name}`).openPopup();
-      })
-      .catch(() => (locationStatus.textContent = "📍 تعذر تحديد اسم الموقع"));
-  },
-  () => (locationStatus.textContent = "❌ فشل في تحديد الموقع"),
-  { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-);
 
-// ========== 5. التحقق من التكرار ==========
+document.addEventListener("DOMContentLoaded", async () => {
+  await autoCheck();
+  await markAbsenceIfNeeded();
+});
+
+// ========== التحقق من التكرار ==========
 async function hasCheckedToday(type) {
   return new Promise((resolve) => {
     const tx = db.transaction("entries", "readonly");
@@ -161,12 +141,16 @@ async function hasCheckedToday(type) {
   });
 }
 
-// ========== 6. تسجيل الدخول والخروج ==========
+// ========== تسجيل الدخول والخروج ==========
 function calculateDistance(lat1, lon1, lat2, lon2) {
   const R = 6371e3;
-  const φ1 = (lat1 * Math.PI) / 180, φ2 = (lat2 * Math.PI) / 180;
-  const Δφ = ((lat2 - lat1) * Math.PI) / 180, Δλ = ((lon2 - lon1) * Math.PI) / 180;
-  const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+  const φ1 = (lat1 * Math.PI) / 180;
+  const φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(Δφ / 2) ** 2 +
+    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
@@ -186,19 +170,21 @@ async function checkLocationAndProceed(type) {
 
   navigator.geolocation.getCurrentPosition(
     (position) => {
+      const now = new Date();
+      const isFriday = now.getDay() === 5;
       const distance = calculateDistance(
         position.coords.latitude,
         position.coords.longitude,
         31.992754,
         36.008455
       );
+
       if (distance <= 100) {
-        const wage = type.includes("إضافي")
-          ? 13.44
-          : type.includes("عادي")
-          ? 9.16
-          : null;
-        const now = new Date();
+        let wage = null;
+        if (type.includes("إضافي")) wage = 13.44;
+        else if (type.includes("عادي")) wage = 9.16;
+        else if (type === "تسجيل دخول") wage = isFriday ? dailyWage * 2 : dailyWage;
+
         const entry = {
           type,
           datetime: now.toISOString(),
@@ -206,7 +192,12 @@ async function checkLocationAndProceed(type) {
           wage,
         };
         saveAttendanceToDB(entry);
-        showModal(`✅ تم ${type} بنجاح`);
+
+        let msg = `✅ تم ${type} بنجاح`;
+        if (type === "تسجيل دخول" && isFriday) {
+          msg += "\n📌 حضور يوم الجمعة - تم احتساب يومين.";
+        }
+        showModal(msg);
       } else {
         showModal("❌ لا يمكنك تسجيل الحضور/الانصراف خارج موقع الشركة.");
       }
@@ -223,7 +214,48 @@ checkOutBtn.addEventListener("click", () => {
   checkLocationAndProceed(type);
 });
 
-// ========== 7. عرض السجل والراتب والخريطة ==========
+// ========== تحديد الغياب إذا لم يتم الحضور ==========
+async function markAbsenceIfNeeded() {
+  const today = new Date();
+  const day = today.getDay(); // 5 = الجمعة
+
+  if (day === 5) return; // يوم الجمعة عطلة
+
+  const checkedIn = await hasCheckedToday("تسجيل دخول");
+  const absentMarked = await hasCheckedToday("غياب");
+
+  if (!checkedIn && !absentMarked) {
+    const entry = {
+      type: "غياب",
+      datetime: today.toISOString(),
+      date: today.toDateString(),
+      wage: 0,
+    };
+    saveAttendanceToDB(entry);
+    console.log("🚫 تم تسجيل غياب لليوم");
+  }
+}
+
+// ========== التشغيل التلقائي ==========
+async function autoCheck() {
+  const now = new Date();
+  const h = now.getHours();
+  const m = now.getMinutes();
+
+  if ((h === 6 || (h === 7 && m === 0)) && !(await hasCheckedToday("تسجيل دخول"))) {
+    checkLocationAndProceed("تسجيل دخول");
+  }
+
+  if (h === 15 && m >= 25 && m <= 40 && !(await hasCheckedToday("تسجيل خروج (عادي)"))) {
+    checkLocationAndProceed("تسجيل خروج (عادي)");
+  }
+
+  if (((h === 17 && m >= 50) || (h === 18 && m <= 10)) && !(await hasCheckedToday("تسجيل خروج (إضافي)"))) {
+    checkLocationAndProceed("تسجيل خروج (إضافي)");
+  }
+}
+
+// ========== عرض السجل ==========
 function loadAttendanceLog() {
   const tx = db.transaction("entries", "readonly");
   const store = tx.objectStore("entries");
@@ -257,19 +289,23 @@ function loadAttendanceLog() {
       } else if (entry.type.includes("خروج")) {
         grouped[dateKey].out = `${time} (${entry.type.includes("إضافي") ? "إضافي" : "عادي"})`;
         grouped[dateKey].wage += entry.wage || 0;
+      } else if (entry.type === "غياب") {
+        grouped[dateKey].in = "🚫 غياب";
       }
     });
 
     Object.entries(grouped).forEach(([date, info]) => {
       const row = document.createElement("tr");
-      if (info.out.includes("عادي")) {
+      if (info.in === "🚫 غياب") {
+        row.style.backgroundColor = "rgba(255, 0, 0, 0.1)";
+      } else if (info.out.includes("عادي")) {
         row.style.backgroundColor = "rgba(59, 130, 246, 0.15)";
       }
       row.innerHTML = `
         <td>${date}</td>
         <td>${info.in}</td>
         <td>${info.out}</td>
-        <td>${info.wage ? info.wage + " د.أ" : "-"}</td>
+        <td>${info.wage ? info.wage.toFixed(2) + " د.أ" : "-"}</td>
       `;
       attendanceBody.appendChild(row);
     });
@@ -289,7 +325,7 @@ showLogBtn.addEventListener("click", () => {
   }
 });
 
-// ========== حساب الراتب الشهري ==========
+// ========== حساب الراتب ==========
 function calculateMonthlySalary(callback) {
   const tx = db.transaction("entries", "readonly");
   const store = tx.objectStore("entries");
@@ -299,15 +335,27 @@ function calculateMonthlySalary(callback) {
     const data = request.result;
     const currentMonth = new Date().getMonth();
     let totalSalary = 0;
+    let workingDays = 0;
+
+    const seenDates = new Set();
 
     data.forEach((entry) => {
       const entryDate = new Date(entry.datetime);
-      if (entryDate.getMonth() === currentMonth && entry.wage) {
+      const monthMatches = entryDate.getMonth() === currentMonth;
+      const entryDay = entryDate.toDateString();
+
+      if (monthMatches && entry.wage) {
         totalSalary += entry.wage;
+
+        // نعد يوم العمل مرة وحدة فقط (بغض النظر عن عدد الإدخالات فيه)
+        if (!seenDates.has(entryDay)) {
+          seenDates.add(entryDay);
+          workingDays++;
+        }
       }
     });
 
-    callback({ totalSalary });
+    callback({ totalSalary, workingDays });
   };
 }
 
@@ -322,37 +370,13 @@ showSalaryBtn.addEventListener("click", () => {
       `📊 راتب شهر ${monthName} ${year}:\n` +
       `💰 الراتب الحالي: ${result.totalSalary.toFixed(2)} د.أ`;
 
-    if (today.getDate() !== lastDay) {
+        if (today.getDate() !== lastDay) {
       message += `\n💡 سيتم عرض الراتب الكامل في نهاية الشهر.`;
     }
 
     showModal(message);
   });
 });
-
-// ========== تشغيل تلقائي أسرع ==========
-document.addEventListener("DOMContentLoaded", async () => {
-  await autoCheck();
-});
-
-async function autoCheck() {
-  const now = new Date();
-  const h = now.getHours();
-  const m = now.getMinutes();
-
-  if ((h === 6 || (h === 7 && m === 0)) && !(await hasCheckedToday("تسجيل دخول"))) {
-    checkLocationAndProceed("تسجيل دخول");
-  }
-
-  if (h === 15 && m >= 25 && m <= 40 && !(await hasCheckedToday("تسجيل خروج (عادي)"))) {
-    checkLocationAndProceed("تسجيل خروج (عادي)");
-  }
-
-  if (((h === 17 && m >= 50) || (h === 18 && m <= 10)) && !(await hasCheckedToday("تسجيل خروج (إضافي)"))) {
-    checkLocationAndProceed("تسجيل خروج (إضافي)");
-  }
-}
-
 // ========== إعداد الخريطة ==========
 const map = L.map("map").setView([31.992754, 36.008455], 16);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -363,3 +387,28 @@ L.marker([31.992754, 36.008455])
   .addTo(map)
   .bindPopup("📍 موقع الشركة")
   .openPopup();
+
+// ========== الموقع الجغرافي ==========
+navigator.geolocation.getCurrentPosition(
+  (position) => {
+    const lat = position.coords.latitude.toFixed(6);
+    const lng = position.coords.longitude.toFixed(6);
+    fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=ar`
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        const name =
+          data.address.city ||
+          data.address.town ||
+          data.address.village ||
+          data.address.suburb ||
+          "موقع غير معروف";
+        locationStatus.textContent = `📍 الموقع الحالي: ${name}`;
+        L.marker([lat, lng]).addTo(map).bindPopup(`📍 ${name}`).openPopup();
+      })
+      .catch(() => (locationStatus.textContent = "📍 تعذر تحديد اسم الموقع"));
+  },
+  () => (locationStatus.textContent = "❌ فشل في تحديد الموقع"),
+  { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+);
