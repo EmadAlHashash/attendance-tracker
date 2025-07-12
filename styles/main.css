@@ -1,7 +1,7 @@
 :root {
-  --color-bg: #121212;
-  --color-glass: rgba(255, 255, 255, 0.1);
-  --color-text: #ffffff;
+  --color-bg: #1e1e1e;
+  --color-glass: rgba(255, 255, 255, 0.07);
+  --color-text: #fefefe;
   --color-primary: #f59e0b;
   --color-primary-hover: #d97706;
   --color-success: #10b981;
@@ -9,22 +9,18 @@
   --color-error: #ef4444;
   --color-warning: #fbbf24;
   --font-base: 'Cairo', sans-serif;
-  --blur-strong: 15px;
+  --blur-strong: 20px;
 }
 
-/* تعيين قاعدة box-sizing للجميع */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-/* html و body بنسبة 100% ويحتوي على تمكين التمرير */
 html, body {
   width: 100%;
   height: 100%;
-  overflow-x: hidden;
-  font-size: 16px; /* حجم الخط الأساسي */
 }
 
 body {
@@ -35,40 +31,33 @@ body {
   flex-direction: column;
   align-items: center;
   padding: 1rem;
-  line-height: 1.5;
-  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  touch-action: manipulation;
 }
 
-/* العنصر الزجاجي */
 .glass {
   background: var(--color-glass);
   backdrop-filter: blur(var(--blur-strong));
   border-radius: 1rem;
-  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
   width: 100%;
-  max-width: 100%; /* ليملأ العرض بالكامل */
+  max-width: 400px;
   padding: 1.5rem;
-  margin: 0 auto;
-  /* السماح بالتمدد لأصغر الشاشات */
-  min-width: 280px; 
-  /* بديل للـ backdrop-filter للأجهزة القديمة */
-  /* يمكن إضافة فلتر بديل هنا أو إزالته حسب دعم الجهاز */
 }
 
-/* الأزرار */
+/* أزرار */
 button {
   appearance: none;
   border: none;
   outline: none;
   cursor: pointer;
   font-family: var(--font-base);
+  font-weight: bold;
   transition: background-color 0.3s, transform 0.2s;
-  font-size: 1rem;
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  user-select: none;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
   width: 100%;
-  max-width: 100%;
 }
 
 button:disabled {
@@ -80,7 +69,6 @@ button:disabled {
   background-color: var(--color-success);
   color: #fff;
 }
-
 #check-in-btn:hover:not(:disabled) {
   background-color: var(--color-success-dark);
 }
@@ -89,43 +77,35 @@ button:disabled {
   background-color: var(--color-primary);
   color: #000;
 }
-
 #check-out-btn:hover:not(:disabled) {
   background-color: var(--color-primary-hover);
 }
 
 .btn {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap; /* للسماح بالانتقال للسطر الجديد في الهواتف الصغيرة */
+  flex-direction: column;
+  gap: 10px;
 }
 
 #show-log-btn,
 #show-salary-btn {
   background-color: var(--color-primary);
   color: #000;
-  padding: 0.5rem 1rem;
-  border-radius: 0.75rem;
-  width: 100%;
-  margin-top: 1rem;
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
-
 #show-log-btn:hover,
 #show-salary-btn:hover {
   background-color: var(--color-primary-hover);
 }
 
-/* خريطة Leaflet */
+/* الخريطة */
 #map {
   width: 100%;
-  max-width: 100%;
-  height: 250px; /* خفض الارتفاع قليلاً للهواتف الصغيرة */
+  max-width: 400px;
+  height: 240px;
   border-radius: 0.75rem;
   overflow: hidden;
-  margin-top: 1rem;
+  margin-top: 1.25rem;
 }
 
 /* جدول الحضور */
@@ -133,22 +113,22 @@ button:disabled {
   width: 100%;
   margin-top: 1rem;
   border-collapse: collapse;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 0.5rem;
-  overflow-x: auto; /* السماح بالتمرير أفقيًا على الجداول العريضة */
-  display: block;
+  background: rgba(255, 255, 255, 0.04);
+  overflow-x: auto;
+  font-size: 0.85rem;
 }
 
 #attendance-table th,
 #attendance-table td {
   padding: 0.5rem 0.75rem;
+  text-align: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  white-space: nowrap; /* منع التفاف النص داخل الخلايا */
+  color: var(--color-text);
 }
 
 #attendance-table th {
-  background: rgba(255, 255, 255, 0.15);
-  font-weight: 700;
+  background: rgba(255, 255, 255, 0.12);
+  font-weight: bold;
 }
 
 /* المودال */
@@ -159,9 +139,7 @@ button:disabled {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
-  padding: 1rem; /* لتجنب القص على الشاشات الصغيرة */
-  overflow-y: auto; /* السماح بالتمرير العمودي داخل المودال */
+  z-index: 9999;
 }
 
 .modal.hidden {
@@ -172,56 +150,35 @@ button:disabled {
   background: var(--color-glass);
   backdrop-filter: blur(var(--blur-strong));
   border-radius: 1rem;
-  padding: 1.5rem;
-  max-width: 100%;
-  width: 400px; /* عرض ثابت للسطح الكبير */
-  max-height: 90vh;
-  overflow-y: auto;
+  padding: 2rem 1rem;
+  max-width: 90%;
   text-align: center;
   color: var(--color-text);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
 }
 
-/* أزرار داخل المودال */
 .modal-content button {
   background-color: var(--color-warning);
   color: #000;
   padding: 0.5rem 1rem;
   border-radius: 0.75rem;
   margin-top: 1rem;
-  width: 100%;
-  max-width: 200px;
-  font-size: 1rem;
 }
-
 .modal-content button:hover {
   background-color: #d97706;
 }
 
-/* استجابة للشاشات الأكبر */
-@media (min-width: 480px) {
-  body {
-    font-size: 1rem;
-  }
-  
+/* استجابة للشاشات الصغيرة جدًا */
+@media (max-width: 360px) {
   .glass {
-    max-width: 420px;
-    padding: 2rem;
-  }
-  
-  #map {
-    height: 300px;
-  }
-  
-  .modal-content {
-    width: 400px;
-  }
-}
-
-@media (min-width: 768px) {
-  .glass {
-    max-width: 500px;
+    padding: 1rem;
   }
   #map {
-    height: 400px;
+    height: 200px;
+  }
+  #attendance-table th,
+  #attendance-table td {
+    padding: 0.4rem;
+    font-size: 0.75rem;
   }
 }

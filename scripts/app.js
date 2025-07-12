@@ -7,7 +7,7 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-// ==================== 1. قاعدة البيانات والمودال ====================
+// ========== 1. قاعدة البيانات والمودال ==========
 let db;
 
 function initDB() {
@@ -28,8 +28,9 @@ function initDB() {
 }
 
 function showModal(message) {
+  const modal = document.getElementById("modal");
   document.getElementById("modal-message").innerText = message;
-  document.getElementById("modal").classList.remove("hidden");
+  modal.classList.remove("hidden");
 }
 
 function closeModal() {
@@ -43,7 +44,7 @@ function saveAttendanceToDB(entry) {
 
 initDB();
 
-// ==================== 2. عناصر الصفحة ====================
+// ========== 2. عناصر الصفحة ==========
 const datetimeElement = document.getElementById("datetime");
 const locationStatus = document.getElementById("location-status");
 const checkInBtn = document.getElementById("check-in-btn");
@@ -54,7 +55,7 @@ const attendanceTable = document.getElementById("attendance-table");
 const attendanceBody = attendanceTable.querySelector("tbody");
 const dailyWage = 10;
 
-// ==================== 3. الوقت والعد التنازلي ====================
+// ========== 3. الوقت والعد التنازلي ==========
 function updateDateTime() {
   const now = new Date();
   datetimeElement.textContent = now.toLocaleDateString("ar-EG", {
@@ -66,8 +67,7 @@ function updateDateTime() {
     minute: "2-digit",
   });
 
-  const h = now.getHours(),
-    m = now.getMinutes();
+  const h = now.getHours(), m = now.getMinutes();
   checkInBtn.style.display = h === 6 || (h === 7 && m === 0) ? "block" : "none";
 
   if (h === 15 && m >= 30) {
@@ -96,6 +96,7 @@ function getNextActionTime() {
   }
   return null;
 }
+
 function updateCountdown() {
   const countdownEl = document.getElementById("countdown");
   const next = getNextActionTime();
@@ -112,13 +113,11 @@ function updateCountdown() {
   countdownEl.textContent = `⏳ الوقت المتبقي حتى ${next.label}: ${hours} ساعة و ${mins} دقيقة و ${secs} ثانية`;
 }
 
-
 setInterval(updateCountdown, 1000);
 updateCountdown();
 updateDateTime();
 setInterval(updateDateTime, 60000);
-
-// ==================== 4. الموقع الجغرافي ====================
+// ========== 4. الموقع الجغرافي ==========
 navigator.geolocation.getCurrentPosition(
   (position) => {
     const lat = position.coords.latitude.toFixed(6);
@@ -143,7 +142,7 @@ navigator.geolocation.getCurrentPosition(
   { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
 );
 
-// ==================== 5. التحقق من التكرار ====================
+// ========== 5. التحقق من التكرار ==========
 async function hasCheckedToday(type) {
   return new Promise((resolve) => {
     const tx = db.transaction("entries", "readonly");
@@ -162,15 +161,12 @@ async function hasCheckedToday(type) {
   });
 }
 
-// ==================== 6. تسجيل الدخول والخروج ====================
+// ========== 6. تسجيل الدخول والخروج ==========
 function calculateDistance(lat1, lon1, lat2, lon2) {
   const R = 6371e3;
-  const φ1 = (lat1 * Math.PI) / 180,
-    φ2 = (lat2 * Math.PI) / 180;
-  const Δφ = ((lat2 - lat1) * Math.PI) / 180,
-    Δλ = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+  const φ1 = (lat1 * Math.PI) / 180, φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180, Δλ = ((lon2 - lon1) * Math.PI) / 180;
+  const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
@@ -220,20 +216,22 @@ async function checkLocationAndProceed(type) {
   );
 }
 
-checkInBtn.addEventListener("click", () =>
-  checkLocationAndProceed("تسجيل دخول")
-);
+checkInBtn.addEventListener("click", () => checkLocationAndProceed("تسجيل دخول"));
 checkOutBtn.addEventListener("click", () => {
   const type = getCheckoutType();
   if (!type) return showModal("❌ لا يمكنك تسجيل الخروج الآن.");
   checkLocationAndProceed(type);
 });
 
-// ==================== 7. عرض السجل والراتب والخريطة ====================
+// ========== 7. عرض السجل والراتب والخريطة ==========
 function loadAttendanceLog() {
   const tx = db.transaction("entries", "readonly");
   const store = tx.objectStore("entries");
   const request = store.getAll();
+
+  request.onerror = () => {
+    showModal("❌ حدث خطأ أثناء تحميل السجل.");
+  };
 
   request.onsuccess = () => {
     const data = request.result;
@@ -257,9 +255,7 @@ function loadAttendanceLog() {
       if (entry.type === "تسجيل دخول") {
         grouped[dateKey].in = time;
       } else if (entry.type.includes("خروج")) {
-        grouped[dateKey].out = `${time} (${
-          entry.type.includes("إضافي") ? "إضافي" : "عادي"
-        })`;
+        grouped[dateKey].out = `${time} (${entry.type.includes("إضافي") ? "إضافي" : "عادي"})`;
         grouped[dateKey].wage += entry.wage || 0;
       }
     });
@@ -281,10 +277,6 @@ function loadAttendanceLog() {
     attendanceTable.style.display = "table";
     showLogBtn.textContent = "🔽 إخفاء السجل";
   };
-
-  request.onerror = () => {
-    showModal("❌ حدث خطأ أثناء تحميل السجل.");
-  };
 }
 
 showLogBtn.addEventListener("click", () => {
@@ -297,7 +289,7 @@ showLogBtn.addEventListener("click", () => {
   }
 });
 
-// ==================== حساب الراتب الشهري ====================
+// ========== حساب الراتب الشهري ==========
 function calculateMonthlySalary(callback) {
   const tx = db.transaction("entries", "readonly");
   const store = tx.objectStore("entries");
@@ -306,20 +298,16 @@ function calculateMonthlySalary(callback) {
   request.onsuccess = () => {
     const data = request.result;
     const currentMonth = new Date().getMonth();
-    let workingDays = 0;
+    let totalSalary = 0;
 
     data.forEach((entry) => {
       const entryDate = new Date(entry.datetime);
-      if (
-        entry.type === "تسجيل دخول" &&
-        entryDate.getMonth() === currentMonth
-      ) {
-        workingDays++;
+      if (entryDate.getMonth() === currentMonth && entry.wage) {
+        totalSalary += entry.wage;
       }
     });
 
-    const totalSalary = workingDays * dailyWage;
-    callback({ workingDays, totalSalary });
+    callback({ totalSalary });
   };
 }
 
@@ -328,20 +316,13 @@ showSalaryBtn.addEventListener("click", () => {
     const today = new Date();
     const monthName = today.toLocaleString("ar-EG", { month: "long" });
     const year = today.getFullYear();
-
-    const lastDay = new Date(
-      today.getFullYear(),
-      today.getMonth() + 1,
-      0
-    ).getDate();
+    const lastDay = new Date(year, today.getMonth() + 1, 0).getDate();
 
     let message =
       `📊 راتب شهر ${monthName} ${year}:\n` +
-      `📅 أيام العمل: ${result.workingDays}`;
+      `💰 الراتب الحالي: ${result.totalSalary.toFixed(2)} د.أ`;
 
-    if (today.getDate() === lastDay) {
-      message += `\n💰 الراتب الإجمالي: ${result.totalSalary} د.أ`;
-    } else {
+    if (today.getDate() !== lastDay) {
       message += `\n💡 سيتم عرض الراتب الكامل في نهاية الشهر.`;
     }
 
@@ -349,41 +330,35 @@ showSalaryBtn.addEventListener("click", () => {
   });
 });
 
-// ==================== التشغيل التلقائي ====================
-window.addEventListener("load", async () => {
+// ========== تشغيل تلقائي أسرع ==========
+document.addEventListener("DOMContentLoaded", async () => {
+  await autoCheck();
+});
+
+async function autoCheck() {
   const now = new Date();
   const h = now.getHours();
   const m = now.getMinutes();
 
-  if (
-    (h === 6 || (h === 7 && m === 0)) &&
-    !(await hasCheckedToday("تسجيل دخول"))
-  ) {
+  if ((h === 6 || (h === 7 && m === 0)) && !(await hasCheckedToday("تسجيل دخول"))) {
     checkLocationAndProceed("تسجيل دخول");
   }
 
-  if (
-    h === 15 &&
-    m >= 25 &&
-    m <= 40 &&
-    !(await hasCheckedToday("تسجيل خروج (عادي)"))
-  ) {
+  if (h === 15 && m >= 25 && m <= 40 && !(await hasCheckedToday("تسجيل خروج (عادي)"))) {
     checkLocationAndProceed("تسجيل خروج (عادي)");
   }
 
-  if (
-    ((h === 17 && m >= 50) || (h === 18 && m <= 10)) &&
-    !(await hasCheckedToday("تسجيل خروج (إضافي)"))
-  ) {
+  if (((h === 17 && m >= 50) || (h === 18 && m <= 10)) && !(await hasCheckedToday("تسجيل خروج (إضافي)"))) {
     checkLocationAndProceed("تسجيل خروج (إضافي)");
   }
-});
+}
 
-// ==================== إعداد الخريطة ====================
+// ========== إعداد الخريطة ==========
 const map = L.map("map").setView([31.992754, 36.008455], 16);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "&copy; OpenStreetMap contributors",
 }).addTo(map);
+
 L.marker([31.992754, 36.008455])
   .addTo(map)
   .bindPopup("📍 موقع الشركة")
