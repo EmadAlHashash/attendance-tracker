@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>نظام الحضور عماد </title>
+<link rel="manifest" href="manifest.json" />
 
   <!-- Tailwind CSS via CDN -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
@@ -13,7 +14,7 @@
   <!-- خطوط Google اختيارية -->
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./styles/main.css" />
-<meta name="mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
 
 </head>
 
@@ -36,10 +37,11 @@
       </button>
     </div>
     <div class="btn">
-      <button id="show-log-btn" class="mt-6 w-full">📋 عرض السجل</button>
-      <button id="show-salary-btn" class="mt-6 w-full">
+      <button id="show-log-btn" class="mt-4 w-full">📋 عرض السجل</button>
+      <button id="show-salary-btn" class="mt-4 w-full">
         عرض الراتب الشهري
       </button>
+      <button id="export-pdf-btn" class="mt-4 w-full"> 📤 تصدير السجل PDF</button>
     </div>
     <table id="attendance-table" class="mt-4 text-black" style="display: none">
       <thead>
@@ -72,6 +74,9 @@
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="scripts/app.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+
 </body>
 
 </html>

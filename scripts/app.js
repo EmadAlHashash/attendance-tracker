@@ -6,6 +6,16 @@ if ("serviceWorker" in navigator) {
       .catch((err) => console.error("❌ فشل في التسجيل", err));
   });
 }
+if ("serviceWorker" in navigator && "SyncManager" in window) {
+  navigator.serviceWorker.ready.then((reg) => {
+    reg.sync.register("auto-check");
+  });
+}
+navigator.serviceWorker.addEventListener("message", (event) => {
+  if (event.data.action === "run-auto-check") {
+    autoCheck(); // دالة الحضور التلقائي اللي عندك
+  }
+});
 
 // ========== قاعدة البيانات والمودال ==========
 let db;
@@ -242,18 +252,140 @@ async function autoCheck() {
   const h = now.getHours();
   const m = now.getMinutes();
 
+  // تسجيل دخول (بين 6:00 و 7:00 فقط)
   if ((h === 6 || (h === 7 && m === 0)) && !(await hasCheckedToday("تسجيل دخول"))) {
+    console.log("📌 تم تفعيل تسجيل دخول تلقائي");
     checkLocationAndProceed("تسجيل دخول");
   }
 
+  // تسجيل خروج عادي (بين 15:25 و 15:40)
   if (h === 15 && m >= 25 && m <= 40 && !(await hasCheckedToday("تسجيل خروج (عادي)"))) {
+    console.log("📌 تم تفعيل تسجيل خروج (عادي) تلقائي");
     checkLocationAndProceed("تسجيل خروج (عادي)");
   }
 
+  // تسجيل خروج إضافي (بين 17:50 و 18:10)
   if (((h === 17 && m >= 50) || (h === 18 && m <= 10)) && !(await hasCheckedToday("تسجيل خروج (إضافي)"))) {
+    console.log("📌 تم تفعيل تسجيل خروج (إضافي) تلقائي");
     checkLocationAndProceed("تسجيل خروج (إضافي)");
   }
+
+  // إذا مر وقت تسجيل الدخول وما تم تسجيله → نسجل غياب تلقائيًا
+  if (h >= 8 && !(await hasCheckedToday("تسجيل دخول")) && !(await hasCheckedToday("غياب"))) {
+    const entry = {
+      type: "غياب",
+      datetime: now.toISOString(),
+      date: now.toDateString(),
+      wage: 0,
+    };
+    saveAttendanceToDB(entry);
+    console.log("🚫 تم تسجيل غياب تلقائيًا");
+  }
 }
+
+// ========== تنزيل السجل PDF ==========
+document.getElementById("export-pdf-btn").addEventListener("click", () => {
+  const tx = db.transaction("entries", "readonly");
+  const store = tx.objectStore("entries");
+  const request = store.getAll();
+
+  request.onsuccess = () => {
+    const data = request.result;
+    const grouped = {};
+
+    data.forEach((entry) => {
+      const dateKey = new Date(entry.datetime).toLocaleDateString("ar-EG");
+      const time = new Date(entry.datetime).toLocaleTimeString("ar-EG", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      if (!grouped[dateKey]) grouped[dateKey] = { in: "-", out: "-", wage: 0 };
+
+      if (entry.type === "تسجيل دخول") {
+        grouped[dateKey].in = time;
+      } else if (entry.type.includes("خروج")) {
+        grouped[dateKey].out = `${time} (${entry.type.includes("إضافي") ? "إضافي" : "عادي"})`;
+        grouped[dateKey].wage += entry.wage || 0;
+      } else if (entry.type === "غياب") {
+        grouped[dateKey].in = "🚫 غياب";
+      }
+    });
+
+    // بناء البيانات للجدول
+    const tableBody = [
+      [
+        { text: "📅 التاريخ", style: "tableHeader" },
+        { text: "🕓 وقت الدخول", style: "tableHeader" },
+        { text: "🕘 وقت الخروج", style: "tableHeader" },
+        { text: "💰 الأجر", style: "tableHeader" },
+      ],
+    ];
+
+    Object.entries(grouped).forEach(([date, info]) => {
+      tableBody.push([
+        { text: date, alignment: "center" },
+        { text: info.in, alignment: "center" },
+        { text: info.out, alignment: "center" },
+        { text: info.wage ? info.wage.toFixed(2) + " د.أ" : "-", alignment: "center" },
+      ]);
+    });
+
+    const docDefinition = {
+      content: [
+        { text: "سجل الحضور الشهري", style: "header", alignment: "center" },
+        {
+          style: "tableExample",
+          table: {
+            headerRows: 1,
+            widths: ["*", "*", "*", "*"],
+            body: tableBody,
+          },
+          layout: {
+            fillColor: (rowIndex) => {
+              if (rowIndex === 0) return "#eeeeee";
+              return rowIndex % 2 === 0 ? "#f9f9f9" : null;
+            },
+          },
+        },
+      ],
+      defaultStyle: {
+        font: "ArabicFont",
+        alignment: "right",
+      },
+      styles: {
+        header: {
+          fontSize: 18,
+          bold: true,
+          margin: [0, 0, 0, 10],
+        },
+        tableHeader: {
+          bold: true,
+          fontSize: 12,
+          color: "black",
+        },
+      },
+      pageOrientation: "portrait",
+    };
+
+    // دعم الخط العربي
+    pdfMake.fonts = {
+      ArabicFont: {
+        normal: "Amiri-Regular.ttf",
+        bold: "Amiri-Bold.ttf",
+        italics: "Amiri-Slanted.ttf",
+        bolditalics: "Amiri-BoldSlanted.ttf",
+      },
+    };
+
+    // تحميل الخط العربي من ملف أو CDN
+    // أسهل طريقة: استخدم الخط الافتراضي vfs_fonts الموجود مع المكتبة (يحتوي على Roboto، لا يدعم العربي جيدًا لكنه كافي مبدئياً)
+
+    pdfMake.createPdf(docDefinition).download("سجل_الحضور.pdf");
+  };
+});
+
+
 
 // ========== عرض السجل ==========
 function loadAttendanceLog() {
