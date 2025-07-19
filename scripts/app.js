@@ -323,78 +323,34 @@ document.getElementById("export-pdf-btn").addEventListener("click", () => {
       }
     });
 
-    // بناء البيانات للجدول
-    const tableBody = [
-      [
-        { text: "📅 التاريخ", style: "tableHeader" },
-        { text: "🕓 وقت الدخول", style: "tableHeader" },
-        { text: "🕘 وقت الخروج", style: "tableHeader" },
-        { text: "💰 الأجر", style: "tableHeader" },
-      ],
-    ];
+    const rows = Object.entries(grouped).map(([date, info]) => [
+      date,
+      info.in,
+      info.out,
+      info.wage ? info.wage.toFixed(2) + " د.أ" : "-",
+    ]);
 
-    Object.entries(grouped).forEach(([date, info]) => {
-      tableBody.push([
-        { text: date, alignment: "center" },
-        { text: info.in, alignment: "center" },
-        { text: info.out, alignment: "center" },
-        { text: info.wage ? info.wage.toFixed(2) + " د.أ" : "-", alignment: "center" },
-      ]);
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.setFont("Helvetica");
+    doc.setFontSize(18);
+    doc.text("سجل الحضور الشهري", doc.internal.pageSize.getWidth() / 2, 20, { align: "center" });
+
+    doc.autoTable({
+      startY: 30,
+      head: [["📅 التاريخ", "🕓 وقت الدخول", "🕘 وقت الخروج", "💰 الأجر"]],
+      body: rows,
+      styles: { halign: "center" },
+      headStyles: { fillColor: "#eeeeee", fontStyle: "bold" },
+      alternateRowStyles: { fillColor: "#f9f9f9" },
+      columnStyles: { 0: { halign: "right" } },
     });
 
-    const docDefinition = {
-      content: [
-        { text: "سجل الحضور الشهري", style: "header", alignment: "center" },
-        {
-          style: "tableExample",
-          table: {
-            headerRows: 1,
-            widths: ["*", "*", "*", "*"],
-            body: tableBody,
-          },
-          layout: {
-            fillColor: (rowIndex) => {
-              if (rowIndex === 0) return "#eeeeee";
-              return rowIndex % 2 === 0 ? "#f9f9f9" : null;
-            },
-          },
-        },
-      ],
-      defaultStyle: {
-        font: "ArabicFont",
-        alignment: "right",
-      },
-      styles: {
-        header: {
-          fontSize: 18,
-          bold: true,
-          margin: [0, 0, 0, 10],
-        },
-        tableHeader: {
-          bold: true,
-          fontSize: 12,
-          color: "black",
-        },
-      },
-      pageOrientation: "portrait",
-    };
-
-    // دعم الخط العربي
-    pdfMake.fonts = {
-      ArabicFont: {
-        normal: "Amiri-Regular.ttf",
-        bold: "Amiri-Bold.ttf",
-        italics: "Amiri-Slanted.ttf",
-        bolditalics: "Amiri-BoldSlanted.ttf",
-      },
-    };
-
-    // تحميل الخط العربي من ملف أو CDN
-    // أسهل طريقة: استخدم الخط الافتراضي vfs_fonts الموجود مع المكتبة (يحتوي على Roboto، لا يدعم العربي جيدًا لكنه كافي مبدئياً)
-
-    pdfMake.createPdf(docDefinition).download("سجل_الحضور.pdf");
+    doc.save("سجل_الحضور.pdf");
   };
 });
+
 
 
 
