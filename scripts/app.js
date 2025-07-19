@@ -22,8 +22,18 @@ let db;
 
 function initDB() {
   const request = indexedDB.open("attendanceDB", 1);
+
   request.onerror = () => showModal("⚠️ تعذر فتح قاعدة البيانات");
-  request.onsuccess = (event) => (db = event.target.result);
+
+  request.onsuccess = (event) => {
+    db = event.target.result;
+    console.log("✅ قاعدة البيانات جاهزة");
+
+    // ✅ الآن بعد فتح قاعدة البيانات، يمكن تشغيل التحقق التلقائي
+    autoCheck();
+    setInterval(autoCheck, 30 * 1000); // كل 30 ثانية
+  };
+
   request.onupgradeneeded = (event) => {
     db = event.target.result;
     const store = db.createObjectStore("entries", {
@@ -36,6 +46,7 @@ function initDB() {
     store.createIndex("wage", "wage");
   };
 }
+
 
 function showModal(message) {
   document.getElementById("modal-message").innerText = message;
@@ -127,10 +138,10 @@ updateCountdown();
 updateDateTime();
 setInterval(updateDateTime, 60000);
 
-document.addEventListener("DOMContentLoaded", async () => {
-  await autoCheck();
-  await markAbsenceIfNeeded();
-});
+// document.addEventListener("DOMContentLoaded", async () => {
+//   await autoCheck();
+//   await markAbsenceIfNeeded();
+// });
 
 // ========== التحقق من التكرار ==========
 async function hasCheckedToday(type) {
