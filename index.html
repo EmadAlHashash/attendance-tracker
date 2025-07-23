@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>نظام الحضور عماد </title>
-<link rel="manifest" href="manifest.json" />
+  <link rel="manifest" href="manifest.json" />
 
   <!-- Tailwind CSS via CDN -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
@@ -41,7 +41,9 @@
       <button id="show-salary-btn" class="mt-4 w-full">
         عرض الراتب الشهري
       </button>
-      <button id="export-pdf-btn" class="mt-4 w-full"> 📤 تصدير السجل PDF</button>
+      <button onclick="exportTableToExcel('attendance-table', 'سجل_الحضور')" class="mt-4 w-full">
+        📤 تصدير السجل Excel
+      </button>
     </div>
     <table id="attendance-table" class="mt-4 text-black" style="display: none">
       <thead>
@@ -74,13 +76,7 @@
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="scripts/app.js"></script>
-<!-- مكتبة jsPDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-<!-- مكتبة jsPDF AutoTable (لإنشاء الجداول بسهولة) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-
-
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 </body>
 

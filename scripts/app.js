@@ -294,63 +294,35 @@ async function autoCheck() {
   }
 }
 
-// ========== تنزيل السجل PDF ==========
-document.getElementById("export-pdf-btn").addEventListener("click", () => {
-  const tx = db.transaction("entries", "readonly");
-  const store = tx.objectStore("entries");
-  const request = store.getAll();
 
-  request.onsuccess = () => {
-    const data = request.result;
-    const grouped = {};
+function exportTableToExcel(tableID, filename = '') {
+  const dataType = 'application/vnd.ms-excel';
+  const table = document.getElementById(tableID);
+  if (!table) {
+    alert("الجدول غير موجود!");
+    return;
+  }
 
-    data.forEach((entry) => {
-      const dateKey = new Date(entry.datetime).toLocaleDateString("ar-EG");
-      const time = new Date(entry.datetime).toLocaleTimeString("ar-EG", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
+  const tableHTML = table.outerHTML.replace(/ /g, '%20');
 
-      if (!grouped[dateKey]) grouped[dateKey] = { in: "-", out: "-", wage: 0 };
+  // اسم الملف
+  filename = filename ? filename + '.xls' : 'excel_data.xls';
 
-      if (entry.type === "تسجيل دخول") {
-        grouped[dateKey].in = time;
-      } else if (entry.type.includes("خروج")) {
-        grouped[dateKey].out = `${time} (${entry.type.includes("إضافي") ? "إضافي" : "عادي"})`;
-        grouped[dateKey].wage += entry.wage || 0;
-      } else if (entry.type === "غياب") {
-        grouped[dateKey].in = "🚫 غياب";
-      }
-    });
+  // إنشاء رابط التنزيل
+  const downloadLink = document.createElement("a");
+  document.body.appendChild(downloadLink);
 
-    const rows = Object.entries(grouped).map(([date, info]) => [
-      date,
-      info.in,
-      info.out,
-      info.wage ? info.wage.toFixed(2) + " د.أ" : "-",
-    ]);
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-
-    doc.setFont("Helvetica");
-    doc.setFontSize(18);
-    doc.text("سجل الحضور الشهري", doc.internal.pageSize.getWidth() / 2, 20, { align: "center" });
-
-    doc.autoTable({
-      startY: 30,
-      head: [["📅 التاريخ", "🕓 وقت الدخول", "🕘 وقت الخروج", "💰 الأجر"]],
-      body: rows,
-      styles: { halign: "center" },
-      headStyles: { fillColor: "#eeeeee", fontStyle: "bold" },
-      alternateRowStyles: { fillColor: "#f9f9f9" },
-      columnStyles: { 0: { halign: "right" } },
-    });
-
-    doc.save("سجل_الحضور.pdf");
-  };
-});
-
+  if (navigator.msSaveOrOpenBlob) {
+    // للمتصفحات القديمة مثل Internet Explorer
+    const blob = new Blob(['\ufeff', tableHTML], { type: dataType });
+    navigator.msSaveOrOpenBlob(blob, filename);
+  } else {
+    // لبقية المتصفحات
+    downloadLink.href = 'data:' + dataType + ', ' + tableHTML;
+    downloadLink.download = filename;
+    downloadLink.click();
+  }
+}
 
 
 
