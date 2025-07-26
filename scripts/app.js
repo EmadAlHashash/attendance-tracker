@@ -295,34 +295,80 @@ async function autoCheck() {
 }
 
 
-function exportTableToExcel(tableID, filename = '') {
-  const dataType = 'application/vnd.ms-excel';
-  const table = document.getElementById(tableID);
-  if (!table) {
-    alert("الجدول غير موجود!");
-    return;
-  }
+document.getElementById("export-excel-btn").addEventListener("click", () => {
+  const tx = db.transaction("entries", "readonly");
+  const store = tx.objectStore("entries");
+  const request = store.getAll();
 
-  const tableHTML = table.outerHTML.replace(/ /g, '%20');
+  request.onsuccess = () => {
+    const data = request.result;
+    const grouped = {};
+    let totalWage = 0;
 
-  // اسم الملف
-  filename = filename ? filename + '.xls' : 'excel_data.xls';
+    data.forEach((entry) => {
+      const dateKey = new Date(entry.datetime).toLocaleDateString("ar-EG");
+      const time = new Date(entry.datetime).toLocaleTimeString("ar-EG", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
 
-  // إنشاء رابط التنزيل
-  const downloadLink = document.createElement("a");
-  document.body.appendChild(downloadLink);
+      if (!grouped[dateKey]) grouped[dateKey] = { in: "-", out: "-", wage: 0 };
 
-  if (navigator.msSaveOrOpenBlob) {
-    // للمتصفحات القديمة مثل Internet Explorer
-    const blob = new Blob(['\ufeff', tableHTML], { type: dataType });
-    navigator.msSaveOrOpenBlob(blob, filename);
-  } else {
-    // لبقية المتصفحات
-    downloadLink.href = 'data:' + dataType + ', ' + tableHTML;
+      if (entry.type === "تسجيل دخول") {
+        grouped[dateKey].in = time;
+      } else if (entry.type.includes("خروج")) {
+        grouped[dateKey].out = `${time} (${entry.type.includes("إضافي") ? "إضافي" : "عادي"})`;
+        grouped[dateKey].wage += entry.wage || 0;
+        totalWage += entry.wage || 0;
+      } else if (entry.type === "غياب") {
+        grouped[dateKey].in = "🚫 غياب";
+      }
+    });
+
+    // بناء HTML للجدول
+    let table = `
+      <table border="1">
+        <tr style="background-color:#f0f0f0">
+          <th>📅 التاريخ</th>
+          <th>🕓 وقت الدخول</th>
+          <th>🕘 وقت الخروج</th>
+          <th>💰 الأجر</th>
+        </tr>
+    `;
+
+    Object.entries(grouped).forEach(([date, info]) => {
+      table += `
+        <tr>
+          <td>${date}</td>
+          <td>${info.in}</td>
+          <td>${info.out}</td>
+          <td>${info.wage ? info.wage.toFixed(2) + " د.أ" : "-"}</td>
+        </tr>
+      `;
+    });
+
+    // صف الإجمالي
+    table += `
+      <tr style="background-color:#ffeaa7; font-weight:bold">
+        <td colspan="3">📊 إجمالي الراتب</td>
+        <td>${totalWage.toFixed(2)} د.أ</td>
+      </tr>
+    `;
+
+    table += "</table>";
+
+    // تصدير Excel
+    const filename = "سجل_الحضور.xls";
+    const dataType = 'application/vnd.ms-excel';
+    const downloadLink = document.createElement("a");
+
+    document.body.appendChild(downloadLink);
+    downloadLink.href = 'data:' + dataType + ', ' + encodeURIComponent(table);
     downloadLink.download = filename;
     downloadLink.click();
-  }
-}
+    document.body.removeChild(downloadLink);
+  };
+});
 
 
 
