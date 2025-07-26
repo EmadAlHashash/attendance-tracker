@@ -325,50 +325,33 @@ document.getElementById("export-excel-btn").addEventListener("click", () => {
       }
     });
 
-    // بناء HTML للجدول
-    let table = `
-      <table border="1">
-        <tr style="background-color:#f0f0f0">
-          <th>📅 التاريخ</th>
-          <th>🕓 وقت الدخول</th>
-          <th>🕘 وقت الخروج</th>
-          <th>💰 الأجر</th>
-        </tr>
-    `;
+    // إعداد البيانات بصيغة مصفوفة
+    const rows = [
+      ["📅 التاريخ", "🕓 وقت الدخول", "🕘 وقت الخروج", "💰 الأجر"]
+    ];
 
     Object.entries(grouped).forEach(([date, info]) => {
-      table += `
-        <tr>
-          <td>${date}</td>
-          <td>${info.in}</td>
-          <td>${info.out}</td>
-          <td>${info.wage ? info.wage.toFixed(2) + " د.أ" : "-"}</td>
-        </tr>
-      `;
+      rows.push([
+        date,
+        info.in,
+        info.out,
+        info.wage ? `${info.wage.toFixed(2)} د.أ` : "-"
+      ]);
     });
 
-    // صف الإجمالي
-    table += `
-      <tr style="background-color:#ffeaa7; font-weight:bold">
-        <td colspan="3">📊 إجمالي الراتب</td>
-        <td>${totalWage.toFixed(2)} د.أ</td>
-      </tr>
-    `;
+    rows.push([
+      "📊 إجمالي الراتب", "", "",
+      `${totalWage.toFixed(2)} د.أ`
+    ]);
 
-    table += "</table>";
-
-    // تصدير Excel
-    const filename = "سجل_الحضور.xls";
-    const dataType = 'application/vnd.ms-excel';
-    const downloadLink = document.createElement("a");
-
-    document.body.appendChild(downloadLink);
-    downloadLink.href = 'data:' + dataType + ', ' + encodeURIComponent(table);
-    downloadLink.download = filename;
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
+    // إنشاء ملف Excel باستخدام SheetJS
+    const worksheet = XLSX.utils.aoa_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "الحضور");
+    XLSX.writeFile(workbook, "سجل_الحضور.xlsx");
   };
 });
+
 
 
 
